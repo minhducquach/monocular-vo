@@ -4,7 +4,7 @@ from utils import load_kitti
 
 from visual_odometry import VisualOdometry
 
-DATASET_DIR = "/media/minhducquach/MiduT73/PROJECTS/monocular-vo/datasets/KITTI"
+DATASET_DIR = "../datasets"
 SEQUENCE = '00' # kitti sequence
 
 if __name__ == "__main__":
@@ -14,7 +14,9 @@ if __name__ == "__main__":
     
     camera = Camera(K)
 
-    visual_odometry = VisualOdometry(frames=frames, camera=camera, detector=None, matcher=None, map=None)
+    feature_detector = FeatureDetector(detector='orb')
+
+    visual_odometry = VisualOdometry(frames=frames, camera=camera, detector=feature_detector, matcher=None, map=None)
     
     visual_odometry.run()
 

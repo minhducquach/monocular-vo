@@ -9,6 +9,6 @@ class FeatureDetector():
     def detect(self, frame):
         keypoints, descriptors = None, None
         if self.detector_name == 'orb':
-            keypoints, descriptors = self.detector.detectAndCompute(frame)
+            keypoints, descriptors = self.detector.detectAndCompute(frame, None)
         return keypoints, descriptors
         
