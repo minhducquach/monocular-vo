@@ -11,5 +11,8 @@ def choose_next_frame(id, keyframe_step):
         return True
     return False
 
+def compute_relative_scale():
+    pass
+
 if __name__ == "__main__":
     print(init_pose())
