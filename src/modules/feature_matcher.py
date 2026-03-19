@@ -8,7 +8,6 @@ class FeatureMatcher():
             self.matcher = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
         
     def match(self, descriptor_1, descriptor_2):
-        pts_prev, pts_curr = [], []
         matches = None
         if self.matcher_name == 'bf':
             matches = self.matcher.match(descriptor_1, descriptor_2)

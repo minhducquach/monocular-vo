@@ -36,6 +36,9 @@ def load_kitti(data_path, sequence) -> tuple[np.ndarray, np.ndarray, int]:
     # Load the ground truth pose values (3x4 matrix)
     ground_truth = np.loadtxt(os.path.join(data_path, 'data_odometry_poses/dataset/poses', f'{sequence}.txt'))
     ground_truth = ground_truth.reshape(-1, 3, 4)
+    
+    
+    calib = np.loadtxt(os.path.join(data_path, 'data_odometry_calib/dataset/sequences', sequence, 'calib.txt'), delimiter=' ', usecols=(1,2,3,4,5,6,7,8,9,10,11,12))
 
     # Convert the ground truth pose values to homogeneous coordinates (4x4 matrix)
     ground_truth_homogeneous = np.zeros((ground_truth.shape[0], 4, 4))
@@ -53,11 +56,14 @@ def load_kitti(data_path, sequence) -> tuple[np.ndarray, np.ndarray, int]:
                     [0, 7.188560000000e+02, 1.852157000000e+02],
                     [0, 0, 1]])
     
+    P0 = calib[0]
+    P0 = np.asarray(P0).reshape(3,4)
 
     # Build the dictionary
     out = {
         "Images": images,
         "K": K,
+        "P": P0,
         "Homogeneous_Pose_Mat": ground_truth_homogeneous,
         "Num_Images": num_of_images
     }
