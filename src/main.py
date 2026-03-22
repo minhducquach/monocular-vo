@@ -18,8 +18,11 @@ if __name__ == "__main__":
     feature_detector = FeatureDetector(detector='orb')
     
     feature_matcher = FeatureMatcher(matcher='bf')
-
-    visual_odometry = VisualOdometry(frames=frames, camera=camera, detector=feature_detector, matcher=feature_matcher, ground_truth=ground_truth)
     
-    visual_odometry.run()
+    feature_tracker = FeatureTracker()
+
+    visual_odometry = VisualOdometry(camera=camera, detector=feature_detector, matcher=feature_matcher, tracker=feature_tracker, ground_truth=ground_truth, mode='tracker')
+    
+    for id, frame in enumerate(frames):
+        visual_odometry.process_frame(id, frame)
 
