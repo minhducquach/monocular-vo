@@ -15,7 +15,7 @@ if __name__ == "__main__":
     
     camera = Camera(K, P)
 
-    feature_detector = FeatureDetector(detector='orb')
+    feature_detector = FeatureDetector(detector='fast')
     
     feature_matcher = FeatureMatcher(matcher='bf')
     

@@ -18,7 +18,7 @@ class VisualOdometry():
         self.is_first_frame = True
         self.prev_frame = None
         
-        self.keyframe_step = 2
+        self.keyframe_step = 1
         self.mode = mode
         
         self.num_min_features = 2000
@@ -37,22 +37,22 @@ class VisualOdometry():
             return True
         
         elif choose_next_frame(id, self.keyframe_step):
-            keypoints, descriptors = self.feature_detector.detect(frame)
-            keypoints = [keypoints[i].pt for i in range(len(keypoints))]
-            
+            keypoints, descriptors = None, None
             prev_keypoints = self.map.last_frame_keypoints()
             
             pts_prev, pts_curr = None, None
             matches = None
             
             if self.mode == 'matcher':
+                keypoints, descriptors = self.feature_detector.detect(frame)
+                keypoints = [keypoints[i].pt for i in range(len(keypoints))]
                 matches = self.feature_matcher.match(self.map.last_frame_descriptors(), descriptors)
                 pts_prev = np.float32([prev_keypoints[m.queryIdx] for m in matches])
                 pts_curr = np.float32([keypoints[m.trainIdx] for m in matches])
             else:
                 pts_prev, pts_curr = self.feature_tracker.track(self.prev_frame, frame, prev_keypoints) 
             
-            E, mask = cv2.findEssentialMat(np.float32(pts_curr), np.float32(pts_prev), self.camera.K)
+            E, mask = cv2.findEssentialMat(np.float32(pts_curr), np.float32(pts_prev), self.camera.K, cv2.RANSAC, 0.999, 1.0)
             
             _, R, t, _ = cv2.recoverPose(E, pts_curr, pts_prev, self.camera.K, mask)
             
@@ -72,13 +72,15 @@ class VisualOdometry():
             #     T[:3, 3] *= relative_scale
             
             scale = compute_absolute_scale(self.ground_truth_poses, id, self.keyframe_step)
-            if scale > 0.1:
-                T[:3, 3] *= scale
+            # if scale > 0.1:
+            T[:3, 3] *= scale
                        
             curr_pose = self.map.last_frame_pose() @ T
             if self.mode == 'tracker' and len(pts_curr) >= self.num_min_features:
                 self.map.add_frame(curr_pose, pts_curr, descriptors)
             else:
+                keypoints, descriptors = self.feature_detector.detect(frame)
+                keypoints = [keypoints[i].pt for i in range(len(keypoints))]
                 self.map.add_frame(curr_pose, keypoints, descriptors)  
             
             visualize(self.map, self.ground_truth_poses, self.prev_frame, frame, keypoints, matches, id, self.keyframe_step, self.mode)
