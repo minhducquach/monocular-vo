@@ -5,6 +5,16 @@ import matplotlib.pyplot as plt
 plt.ion()  # Turn on interactive mode
 fig, (ax_img, ax_traj) = plt.subplots(1, 2, figsize=(16, 6))
 
+# Initialize plot elements for trajectory
+line_gt, = ax_traj.plot([], [], 'g-', label='Ground Truth')
+line_traj, = ax_traj.plot([], [], 'b-', label='Trajectory')
+ax_traj.set_xlabel("X")
+ax_traj.set_ylabel("Z")
+ax_traj.set_title("Monocular Visual Odometry Trajectory (X-Z)")
+ax_traj.axis("equal")
+ax_traj.grid(True)
+ax_traj.legend()
+
 def init_pose():
     pose = np.eye(4)
     return pose
@@ -76,46 +86,65 @@ def compute_absolute_scale(gt, id, step):
     
     return np.linalg.norm(prev - curr)
     
+def visualize_matches(map, ground_truth, prev_frame, frame, keypoints, matches, id, step):
+    img_match = cv2.drawMatches(prev_frame, map.last_frame_keypoints(), frame, keypoints, matches[:10], None, flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
+    ax_img.clear()
+    ax_img.imshow(cv2.cvtColor(img_match, cv2.COLOR_BGR2RGB))
+    ax_img.set_title(f"Feature Matches (Frame {id})")
+    ax_img.axis("off")
 
-def visualize(map, ground_truth, prev_frame, frame, keypoints, matches, id, step, mode):
-    # match_img = cv2.drawMatches(self.prev_frame, self.map.last_frame_keypoints(), frame, keypoints, matches[:10], None, flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
-            
-    # cv2.imshow('img', match_img)
-    plt.cla()
-
-    ax_traj.set_xlabel("X")
-    ax_traj.set_ylabel("Z")
-    ax_traj.set_title("Monocular Visual Odometry Trajectory (X-Z)")
-    ax_traj.axis("equal")
-    ax_traj.grid(True)
-    ax_traj.legend()
-    
-    if mode == 'matcher':
-        img_match = cv2.drawMatches(prev_frame, map.last_frame_keypoints(), frame, keypoints, matches[:10], None, flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
-        ax_img.clear()
-        ax_img.imshow(cv2.cvtColor(img_match, cv2.COLOR_BGR2RGB))
-        ax_img.set_title(f"Feature Matches (Frame {id})")
-        ax_img.axis("off")
-    else:
-        pass
-    
     traj_np = np.array(map.trajectory)
     max_true_frame_id = len(traj_np) * step
-
     gt_x = ground_truth[:max_true_frame_id:step, 0, 3]
     gt_z = ground_truth[:max_true_frame_id:step, 2, 3]
 
-    line_gt, = ax_traj.plot(gt_x, gt_z, 'g-', label='Ground Truth')
-    line_traj, = ax_traj.plot([], [], 'b-', label='Trajectory')
-    
-    line_traj.set_data(traj_np[:, 0, 3], traj_np[:, 2, 3])
     line_gt.set_data(gt_x, gt_z)
+    line_traj.set_data(traj_np[:, 0, 3], traj_np[:, 2, 3])
 
     ax_traj.relim()
     ax_traj.autoscale_view()
-    ax_traj.legend()
+    
+    plt.pause(0.01)
+
+def visualize_tracking(map, ground_truth, prev_frame, frame, pts_prev, pts_curr, id, step):
+    frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
+    prev_frame = cv2.cvtColor(prev_frame, cv2.COLOR_GRAY2BGR)
+
+    mask = np.zeros_like(frame)
+    
+    for i, (pt_curr, pt_prev) in enumerate(zip(pts_curr, pts_prev)):
+        a, b = pt_curr.ravel()
+        c, d = pt_prev.ravel()
+        mask = cv2.line(mask, (int(a), int(b)), (int(c), int(d)), (0, 255, 0), 2)
+        frame = cv2.circle(frame, (int(a), int(b)), 5, (0, 255, 0), -1)
+    
+    img_track = cv2.add(frame, mask)
+    
+    ax_img.clear()
+    ax_img.imshow(cv2.cvtColor(img_track, cv2.COLOR_BGR2RGB))
+    ax_img.set_title(f"Features Tracked (Frame {id})")
+    ax_img.axis("off")
+
+    traj_np = np.array(map.trajectory)
+    max_true_frame_id = len(traj_np) * step
+    gt_x = ground_truth[:max_true_frame_id:step, 0, 3]
+    gt_z = ground_truth[:max_true_frame_id:step, 2, 3]
+
+    line_gt.set_data(gt_x, gt_z)
+    line_traj.set_data(traj_np[:, 0, 3], traj_np[:, 2, 3])
+
+    ax_traj.relim()
+    ax_traj.autoscale_view()
     
     plt.pause(0.01)
     
+def motion_check(pts_curr, pts_prev, threshold):
+    dist = np.linalg.norm(pts_curr - pts_prev, axis=1)
+    mean = np.mean(dist)
+    print(mean)
+    if mean > threshold:
+        return True
+    return False
+
 if __name__ == "__main__":
     print(init_pose())

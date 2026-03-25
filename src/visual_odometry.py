@@ -1,7 +1,8 @@
 import cv2
 import numpy as np
 
-from utils import init_pose, choose_next_frame, compute_relative_scale, compute_absolute_scale, visualize
+from utils import init_pose, choose_next_frame, compute_relative_scale, compute_absolute_scale, visualize_matches, visualize_tracking, motion_check
+
 from modules import Map
 
 class VisualOdometry():
@@ -57,8 +58,10 @@ class VisualOdometry():
             _, R, t, _ = cv2.recoverPose(E, pts_curr, pts_prev, self.camera.K, mask)
             
             T = np.eye(4)
-            T[:3, :3] = R
-            T[:3, 3] = t.flatten()
+            
+            if motion_check(pts_curr, pts_prev, threshold=3):
+                T[:3, :3] = R
+                T[:3, 3] = t.flatten()
 
             # relative_scale = 0
 
@@ -71,9 +74,9 @@ class VisualOdometry():
             # if relative_scale != 0:
             #     T[:3, 3] *= relative_scale
             
-            scale = compute_absolute_scale(self.ground_truth_poses, id, self.keyframe_step)
-            # if scale > 0.1:
-            T[:3, 3] *= scale
+                scale = compute_absolute_scale(self.ground_truth_poses, id, self.keyframe_step)
+                if scale > 0.1:
+                    T[:3, 3] *= scale
                        
             curr_pose = self.map.last_frame_pose() @ T
             if self.mode == 'tracker' and len(pts_curr) >= self.num_min_features:
@@ -83,9 +86,12 @@ class VisualOdometry():
                 keypoints = [keypoints[i].pt for i in range(len(keypoints))]
                 self.map.add_frame(curr_pose, keypoints, descriptors)  
             
-            visualize(self.map, self.ground_truth_poses, self.prev_frame, frame, keypoints, matches, id, self.keyframe_step, self.mode)
             if self.mode == 'matcher':
+                visualize_matches(self.map, self.ground_truth_poses, self.prev_frame, frame, keypoints, matches, id, self.keyframe_step)
                 self.last_matches = matches
+            else:
+                visualize_tracking(self.map, self.ground_truth_poses, self.prev_frame, frame, pts_prev, pts_curr, id, self.keyframe_step)
+            
             self.prev_frame = frame
          
         # Viz img

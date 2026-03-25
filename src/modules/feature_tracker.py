@@ -3,8 +3,8 @@ import numpy as np
 
 class FeatureTracker():
     def __init__(self):
-        self.lk_params = dict(winSize=(21, 21),
-                              maxLevel=3,
+        self.lk_params = dict(winSize=(15, 15),
+                              maxLevel=2,
                               criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 30, 0.01))
 
     def track(self, prev_frame, curr_frame, prev_pts):
