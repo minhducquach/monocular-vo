@@ -5,8 +5,14 @@ import sys
 
 from visual_odometry import VisualOdometry
 
-DATASET_DIR = "/media/minhducquach/MiduT73/PROJECTS/monocular-vo/datasets/KITTI"
-SEQUENCE = '00' # kitti sequence
+import configparser
+
+config = configparser.ConfigParser()
+config.read("../settings.ini")
+app_config = config["app"]
+
+DATASET_DIR = app_config["path"]
+SEQUENCE = app_config["sequence"] # kitti sequence
 
 if __name__ == "__main__":
     dataset = load_kitti(DATASET_DIR, SEQUENCE)
@@ -23,6 +29,7 @@ if __name__ == "__main__":
 
     visual_odometry = VisualOdometry(camera=camera, detector=feature_detector, matcher=feature_matcher, tracker=feature_tracker, ground_truth=ground_truth, mode='tracker')
     
-    for id, frame in enumerate(frames):
+    for id, frame_path in enumerate(frames):
+        frame = cv2.imread(frame_path, cv2.IMREAD_GRAYSCALE)
         visual_odometry.process_frame(id, frame)
 

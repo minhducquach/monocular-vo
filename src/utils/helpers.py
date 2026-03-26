@@ -1,6 +1,8 @@
 import cv2
 import numpy as np
+import matplotlib
 import matplotlib.pyplot as plt
+matplotlib.use('TkAgg')
 
 plt.ion()  # Turn on interactive mode
 fig, (ax_img, ax_traj) = plt.subplots(1, 2, figsize=(16, 6))
@@ -141,7 +143,6 @@ def visualize_tracking(map, ground_truth, prev_frame, frame, pts_prev, pts_curr,
 def motion_check(pts_curr, pts_prev, threshold):
     dist = np.linalg.norm(pts_curr - pts_prev, axis=1)
     mean = np.mean(dist)
-    print(mean)
     if mean > threshold:
         return True
     return False

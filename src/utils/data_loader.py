@@ -3,6 +3,7 @@ import numpy as np
 import cv2
 import time
 import sys
+import glob
 
 '''
 This file contains the code to load the data from the datasets.
@@ -46,7 +47,7 @@ def load_kitti(data_path, sequence) -> tuple[np.ndarray, np.ndarray, int]:
     ground_truth_homogeneous[:, 3, 3] = 1
 
     # Load Image_0
-    images = [cv2.imread(os.path.join(kitti_image_path, filename), cv2.IMREAD_GRAYSCALE) for filename in sorted(os.listdir(kitti_image_path))]
+    images = [filename for filename in sorted(glob.glob(os.path.join(kitti_image_path, '*.png')))]
     images = np.array(images)
 
 
