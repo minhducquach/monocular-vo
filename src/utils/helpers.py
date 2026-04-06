@@ -58,9 +58,9 @@ def compute_relative_scale(camera, map, prev_matches, curr_matches, curr_keypoin
     pts1 = np.array(tracked_pts_1, dtype=np.float32)
     pts2 = np.array(tracked_pts_2, dtype=np.float32)
 
-    P0 = camera.K @ np.linalg.inv(pose_0)[:3, :4]
-    P1 = camera.K @ np.linalg.inv(pose_1)[:3, :4]
-    P2 = camera.K @ np.linalg.inv(pose_1 @ curr_T)[:3, :4]
+    P0 = camera.K @ pose_0[:3, :4]
+    P1 = camera.K @ pose_1[:3, :4]
+    P2 = camera.K @ (pose_1 @ curr_T)[:3, :4]
 
     scales = []
 
@@ -89,7 +89,14 @@ def compute_absolute_scale(gt, id, step):
     return np.linalg.norm(prev - curr)
     
 def visualize_matches(map, ground_truth, prev_frame, frame, keypoints, matches, id, step):
-    img_match = cv2.drawMatches(prev_frame, map.last_frame_keypoints(), frame, keypoints, matches[:10], None, flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
+    prev_kps = map.last_frame_keypoints()
+    if prev_kps and not hasattr(prev_kps[0], 'pt'):
+        prev_kps = [cv2.KeyPoint(p[0], p[1], 1) for p in prev_kps]
+
+    if keypoints and not hasattr(keypoints[0], 'pt'):
+        keypoints = [cv2.KeyPoint(p[0], p[1], 1) for p in keypoints]
+        
+    img_match = cv2.drawMatches(prev_frame, prev_kps, frame, keypoints, matches[:10], None, flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
     ax_img.clear()
     ax_img.imshow(cv2.cvtColor(img_match, cv2.COLOR_BGR2RGB))
     ax_img.set_title(f"Feature Matches (Frame {id})")

@@ -8,11 +8,12 @@ from visual_odometry import VisualOdometry
 import configparser
 
 config = configparser.ConfigParser()
-config.read("../settings.ini")
+config.read("/media/minhducquach/MiduT73/PROJECTS/monocular-vo/settings.ini")
 app_config = config["app"]
 
 DATASET_DIR = app_config["path"]
 SEQUENCE = app_config["sequence"] # kitti sequence
+EST_MODE = app_config["estimation_mode"]
 
 if __name__ == "__main__":
     dataset = load_kitti(DATASET_DIR, SEQUENCE)
@@ -27,7 +28,13 @@ if __name__ == "__main__":
     
     feature_tracker = FeatureTracker()
 
-    visual_odometry = VisualOdometry(camera=camera, detector=feature_detector, matcher=feature_matcher, tracker=feature_tracker, ground_truth=ground_truth, mode='tracker')
+    visual_odometry = VisualOdometry(camera=camera, 
+                                     detector=feature_detector, 
+                                     matcher=feature_matcher, 
+                                     tracker=feature_tracker, 
+                                     ground_truth=ground_truth, 
+                                     feature_mode='tracker', 
+                                     estimation_mode=EST_MODE)
     
     for id, frame_path in enumerate(frames):
         frame = cv2.imread(frame_path, cv2.IMREAD_GRAYSCALE)
